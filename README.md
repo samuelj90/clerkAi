@@ -2,7 +2,12 @@
 
 ClerkAI is an AI-native internal assistant that automates document processing, data entry, validation, and reporting through natural language interactions. It uses OCR, NLP, and LLMs (GPT-4+) combined with Model Context Protocol to make business workflows intelligent, extensible, and low-maintenance.
 
----
+## 🌟 Objectives
+
+1. Streamline document processing workflows.
+2. Enhance data accuracy and reduce manual entry.
+3. Provide actionable insights through intelligent reporting.
+4. Ensure extensibility and adaptability to changing business needs.
 
 ## 🚀 Features
 
@@ -12,7 +17,7 @@ ClerkAI is an AI-native internal assistant that automates document processing, d
 - 📊 **Interactive Reports**: Generates dynamic HTML-based dashboards.
 - 🔄 **Extensible via MCP**: Schemas, workflows, and tools are defined and updated via `model_context.json`.
 
----
+
 
 ## 🏗️ Architecture Overview
 
@@ -54,7 +59,7 @@ clerkai/
 └── README.md
 ```
 
----
+
 
 ## 🔧 Setup Instructions
 
@@ -104,7 +109,7 @@ cd frontend
 npm run dev
 ```
 
----
+
 
 ## 📦 MCP Context (`model_context.json`)
 
@@ -142,7 +147,7 @@ This file defines:
 }
 ```
 
----
+
 
 ## 🧠 Natural Language Examples
 
@@ -155,7 +160,7 @@ This file defines:
 - **"Email all unpaid invoices to vendors"**  
   ✔️ Uses schema + tool + workflow to send templated emails
 
----
+
 
 ## 📊 Report Exports
 
@@ -163,7 +168,7 @@ This file defines:
 - **PDF** (via Puppeteer)
 - **CSV/Excel** (via ExcelJS)
 
----
+
 
 ## 🔐 Security
 
@@ -172,7 +177,7 @@ This file defines:
 - Audit logs for AI-generated queries
 - PII-aware extraction and storage policies
 
----
+
 
 ## 🧩 Extending the Assistant
 
@@ -198,12 +203,12 @@ LLM now understands:
 
 > "Show me all purchase orders above $10,000"
 
----
+
 
 ## 🤖 Tech Stack
 
 | Layer      | Tech Used                    |
-|------------|-----------------------------|
+||--|
 | Frontend   | React + Vite + MUI          |
 | Backend    | Node.js (or Spring Boot)    |
 | LLM        | OpenAI GPT-4 / GPT-4o       |
@@ -213,7 +218,7 @@ LLM now understands:
 | Reports    | Recharts, jsPDF, ExcelJS    |
 | Auth       | Azure AD, OAuth2            |
 
----
+
 
 ## 📌 Roadmap
 
@@ -223,7 +228,7 @@ LLM now understands:
 - Multi-language support
 - Fine-tuned RAG over internal docs
 
----
+
 
 ## 🤝 Contributing
 
