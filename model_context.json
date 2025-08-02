@@ -1,0 +1,459 @@
+{
+  "version": "1.0.0",
+  "metadata": {
+    "name": "ClerkAI Model Context Protocol Configuration",
+    "description": "AI-Powered Office Assistant with Model Context Protocol",
+    "created_at": "2024-01-01T00:00:00Z",
+    "last_updated": "2024-01-01T00:00:00Z"
+  },
+  "global_config": {
+    "auto_process_documents": true,
+    "default_language": "en",
+    "max_file_size_mb": 10,
+    "ocr_language": "eng",
+    "default_timeout_seconds": 300,
+    "max_retries": 3
+  },
+  "tools": {
+    "document_ocr": {
+      "name": "document_ocr",
+      "description": "Extract text from documents using Optical Character Recognition (OCR)",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "Path to the document file"
+          },
+          "language": {
+            "type": "string",
+            "default": "eng",
+            "description": "OCR language code"
+          },
+          "enhance_image": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to enhance image before OCR"
+          }
+        },
+        "required": ["file_path"]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Extracted text content"
+          },
+          "confidence": {
+            "type": "number",
+            "description": "OCR confidence score (0-100)"
+          },
+          "language": {
+            "type": "string",
+            "description": "Detected language"
+          }
+        }
+      },
+      "category": "document_processing",
+      "version": "1.0.0",
+      "enabled": true
+    },
+    "nlp_analysis": {
+      "name": "nlp_analysis",
+      "description": "Analyze text using Natural Language Processing techniques",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Text to analyze"
+          },
+          "extract_entities": {
+            "type": "boolean",
+            "default": true,
+            "description": "Extract named entities"
+          },
+          "extract_keywords": {
+            "type": "boolean",
+            "default": true,
+            "description": "Extract keywords"
+          },
+          "generate_summary": {
+            "type": "boolean",
+            "default": false,
+            "description": "Generate text summary"
+          }
+        },
+        "required": ["text"]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "entities": {
+            "type": "array",
+            "description": "Extracted named entities"
+          },
+          "keywords": {
+            "type": "array",
+            "description": "Extracted keywords"
+          },
+          "summary": {
+            "type": "string",
+            "description": "Generated summary"
+          },
+          "sentiment": {
+            "type": "string",
+            "description": "Sentiment analysis result"
+          }
+        }
+      },
+      "category": "nlp",
+      "version": "1.0.0",
+      "enabled": true
+    },
+    "llm_data_extraction": {
+      "name": "llm_data_extraction",
+      "description": "Extract structured data from text using Large Language Models",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Text to extract data from"
+          },
+          "schema": {
+            "type": "object",
+            "description": "Schema defining the expected data structure"
+          },
+          "examples": {
+            "type": "array",
+            "description": "Example extractions to guide the model"
+          }
+        },
+        "required": ["text", "schema"]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "extracted_data": {
+            "type": "object",
+            "description": "Extracted structured data"
+          },
+          "confidence": {
+            "type": "number",
+            "description": "Extraction confidence score"
+          }
+        }
+      },
+      "category": "data_extraction",
+      "version": "1.0.0",
+      "enabled": true
+    }
+  },
+  "workflows": {
+    "document_processing": {
+      "name": "document_processing",
+      "description": "Complete document processing workflow with OCR, NLP, and data extraction",
+      "steps": [
+        {
+          "name": "ocr_extraction",
+          "tool": "document_ocr",
+          "input_mapping": {
+            "file_path": "${input.file_path}",
+            "language": "${input.language}"
+          },
+          "error_handling": "stop"
+        },
+        {
+          "name": "nlp_analysis",
+          "tool": "nlp_analysis",
+          "input_mapping": {
+            "text": "${steps.ocr_extraction.output.text}",
+            "extract_entities": true,
+            "extract_keywords": true
+          },
+          "error_handling": "continue"
+        },
+        {
+          "name": "data_extraction",
+          "tool": "llm_data_extraction",
+          "input_mapping": {
+            "text": "${steps.ocr_extraction.output.text}",
+            "schema": "${input.schema}"
+          },
+          "condition": "${input.schema != null}",
+          "error_handling": "continue"
+        }
+      ],
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "Path to the document file"
+          },
+          "language": {
+            "type": "string",
+            "default": "eng",
+            "description": "OCR language"
+          },
+          "schema": {
+            "type": "object",
+            "description": "Optional schema for data extraction"
+          }
+        },
+        "required": ["file_path"]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "extracted_text": {
+            "type": "string"
+          },
+          "entities": {
+            "type": "array"
+          },
+          "keywords": {
+            "type": "array"
+          },
+          "extracted_data": {
+            "type": "object"
+          }
+        }
+      },
+      "triggers": [
+        {
+          "type": "document_upload",
+          "condition": "auto_process=true"
+        }
+      ],
+      "category": "document_processing",
+      "version": "1.0.0",
+      "enabled": true
+    },
+    "invoice_processing": {
+      "name": "invoice_processing",
+      "description": "Specialized workflow for processing invoice documents",
+      "steps": [
+        {
+          "name": "ocr_extraction",
+          "tool": "document_ocr",
+          "input_mapping": {
+            "file_path": "${input.file_path}"
+          }
+        },
+        {
+          "name": "invoice_data_extraction",
+          "tool": "llm_data_extraction",
+          "input_mapping": {
+            "text": "${steps.ocr_extraction.output.text}",
+            "schema": "${schemas.invoice}"
+          }
+        }
+      ],
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string"
+          }
+        },
+        "required": ["file_path"]
+      },
+      "triggers": [
+        {
+          "type": "document_upload",
+          "condition": "document_type=invoice"
+        }
+      ],
+      "category": "finance",
+      "version": "1.0.0",
+      "enabled": true
+    }
+  },
+  "schemas": {
+    "invoice": {
+      "name": "invoice",
+      "description": "Invoice document schema for structured data extraction",
+      "fields": {
+        "invoice_number": {
+          "type": "string",
+          "required": true,
+          "description": "Unique invoice identifier"
+        },
+        "invoice_date": {
+          "type": "string",
+          "format": "date",
+          "required": true,
+          "description": "Invoice date"
+        },
+        "due_date": {
+          "type": "string",
+          "format": "date",
+          "description": "Payment due date"
+        },
+        "vendor_name": {
+          "type": "string",
+          "required": true,
+          "description": "Vendor/supplier name"
+        },
+        "vendor_address": {
+          "type": "string",
+          "description": "Vendor address"
+        },
+        "customer_name": {
+          "type": "string",
+          "description": "Customer/buyer name"
+        },
+        "total_amount": {
+          "type": "number",
+          "required": true,
+          "description": "Total invoice amount"
+        },
+        "currency": {
+          "type": "string",
+          "default": "USD",
+          "description": "Currency code"
+        },
+        "tax_amount": {
+          "type": "number",
+          "description": "Tax amount"
+        },
+        "line_items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "description": {
+                "type": "string"
+              },
+              "quantity": {
+                "type": "number"
+              },
+              "unit_price": {
+                "type": "number"
+              },
+              "line_total": {
+                "type": "number"
+              }
+            }
+          },
+          "description": "Invoice line items"
+        }
+      },
+      "category": "finance",
+      "version": "1.0.0",
+      "enabled": true
+    },
+    "receipt": {
+      "name": "receipt",
+      "description": "Receipt document schema",
+      "fields": {
+        "receipt_number": {
+          "type": "string",
+          "description": "Receipt number"
+        },
+        "date": {
+          "type": "string",
+          "format": "date",
+          "required": true
+        },
+        "merchant_name": {
+          "type": "string",
+          "required": true
+        },
+        "total_amount": {
+          "type": "number",
+          "required": true
+        },
+        "currency": {
+          "type": "string",
+          "default": "USD"
+        },
+        "payment_method": {
+          "type": "string",
+          "enum": ["cash", "credit_card", "debit_card", "check", "other"]
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "quantity": {
+                "type": "number"
+              },
+              "price": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      },
+      "category": "finance",
+      "version": "1.0.0",
+      "enabled": true
+    },
+    "contract": {
+      "name": "contract",
+      "description": "Contract document schema",
+      "fields": {
+        "contract_number": {
+          "type": "string",
+          "description": "Contract identifier"
+        },
+        "title": {
+          "type": "string",
+          "description": "Contract title"
+        },
+        "parties": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string"
+              },
+              "address": {
+                "type": "string"
+              }
+            }
+          },
+          "description": "Contract parties"
+        },
+        "effective_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "expiration_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "value": {
+          "type": "number",
+          "description": "Contract value"
+        },
+        "currency": {
+          "type": "string",
+          "default": "USD"
+        },
+        "key_terms": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Key contract terms"
+        }
+      },
+      "category": "legal",
+      "version": "1.0.0",
+      "enabled": true
+    }
+  }
+}

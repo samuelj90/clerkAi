@@ -1,0 +1,120 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: clerkai-postgres
+    environment:
+      POSTGRES_DB: clerkai
+      POSTGRES_USER: clerkuser
+      POSTGRES_PASSWORD: clerkpass
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - clerkai-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clerkuser -d clerkai"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Redis for caching and background tasks
+  redis:
+    image: redis:7-alpine
+    container_name: clerkai-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - clerkai-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ClerkAI Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: clerkai-app
+    environment:
+      - DATABASE_URL=postgresql://clerkuser:clerkpass@postgres:5432/clerkai
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=development
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - clerkai-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Celery Worker for background tasks
+  celery-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: clerkai-worker
+    command: celery -A src.worker worker --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql://clerkuser:clerkpass@postgres:5432/clerkai
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=development
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - clerkai-network
+
+  # Celery Beat for scheduled tasks
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: clerkai-beat
+    command: celery -A src.worker beat --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql://clerkuser:clerkpass@postgres:5432/clerkai
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=development
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - clerkai-network
+
+networks:
+  clerkai-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:

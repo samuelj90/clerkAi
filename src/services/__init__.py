@@ -1,0 +1,1 @@
+"""Core services for document processing, OCR, NLP, and LLM integration."""
